@@ -1,6 +1,6 @@
 #Quest: Regex, Files, Urls
-
-import re, pytest
+#Master Build, answering questions with regular expressions
+import re, pytest, urllib.request
 
 __STUDENT_ID__  = "47555408"        # replace with your 8 digit student id
 __CODING_NAME__ = "tkyaagba"           # replace with your coding name - max 15 characters
@@ -12,15 +12,8 @@ def count_vowels(mystr):
     """return the number of vowels, upper and lowercase a,e,i,o,u in the string
     >>> count_vowels('aaacvemmikkOOzzuU')  -> 9
     """
-    #First, convert string to lower case for ease of comparison
-    #lowerString = mystr.lower()
-    vowelCount = 0
-    
-    for char in mystr:
-        if char in __VOWELS__:
-            vowelCount += 1
-    
-    return vowelCount
+    vowels = re.findall(r'[AEIOUaeiou]', mystr)
+    return len(vowels)
 
 #COMPLETE / PASSED
 def is_valid_python_hex(mystr):
@@ -29,27 +22,11 @@ def is_valid_python_hex(mystr):
      >>> is_valid_python_hex('x1A2f')  -> False
      >>> is_valid_python_hex('0x1A2G') -> False
     """
-    answer = False
-    
-    #not valid hex if it doesn't begin with '0x'
-    if not mystr.startswith("0x"):
-        answer = False
-    #not valid hex if string contains non alpha-numeric characters
-    elif not mystr.isalnum():
-        answer = False
+    matchObj = re.match(r'0x[0-9a-fA-F]+', mystr)
+    if matchObj and matchObj.group() == mystr:
+        return True
     else:
-        for i in range(2, len(mystr)):
-            #check that alphabet characters are only from a through f or A through F
-            char = mystr[i]
-            if char.isalpha():
-                if (char.islower() and char < 'g') or (char.isupper() and char < 'G'):
-                    answer = True
-                else:
-                    #if any character is not within spec., end the loop and declare invalid hex
-                    answer = False
-                    break
-    
-    return answer
+        return False
 
 #COMPLETE / PASSED
 def has_vowel(mystr):
@@ -57,12 +34,11 @@ def has_vowel(mystr):
     >>> has_vowel("zcxvsd")     -> False
     >>> has_vowel("vcbxvefjk")  -> True
     """
-    answer = False
-    for char in mystr:
-        if char in __VOWELS__:
-            answer = True
-            break
-    return answer
+    searchObj = re.search(r'[AEIOUaeiou]', mystr)
+    if searchObj:
+        return True
+    else:
+        return False
 
 #COMPLETE / PASSED
 def is_integer(mystr):
@@ -71,11 +47,11 @@ def is_integer(mystr):
     >>> is_integer("-192345")  -> True
     >>> is_integer("234x5")    -> False
     """
-
-    if not mystr[1:].isdigit():
-        return False
-    elif mystr[0].isdigit() or mystr[0] == '-':
+    matchObj = re.match(r'[\-\d]\d+', mystr)
+    if matchObj and matchObj.group() == mystr:
         return True
+    else:
+        return False
 
 #COMPLETE / PASSED
 def get_extension(mystr):
@@ -84,13 +60,11 @@ def get_extension(mystr):
     >>> get_extension('foo.doc.txt') -> 'txt'
     >>> get_extension('foozip')      -> 'NONE'
     """
-    #find last index of '.'
-    i = mystr.rfind('.')
-    #return 'NONE' if '.' is the last character or is not found at all
-    if i == len(mystr) - 1 or i == -1:
-        return 'NONE'
+    extension = re.search(r'\.(\w+)$', mystr)
+    if extension:
+        return extension.group(1)
     else:
-        return mystr[i+1 : ]
+        return 'NONE'
 
 #COMPLETE / PASSED
 def is_number(mystr):
@@ -102,23 +76,12 @@ def is_number(mystr):
     >>> is_number('234.99.77')  -> False
     >>> is_number('234a.88')    -> False
     """
-    mystrList = mystr.split('.')
     
-    #number is invalid if list has more than 2 items
-    if len(mystrList) > 2:
-        return False
-    #number is invalid if integer portion is not a number
-    elif not is_integer(mystrList[0]):
-        return False
-    #number is invalid if decimal portion is not a number
-    elif len(mystrList) == 1:
+    matchObj = re.match(r'([\-\d]\d*)(\.?)(\d*)', mystr)
+    if matchObj and matchObj.group() == mystr:
         return True
-    #number is invalid if decimal portion is neither a number nor empty
-    elif not (is_integer(mystrList[1]) or mystrList[1] == ''):
-        return False
-    #if non of the previous conditions is satisfied, the number is valid
     else:
-        return True
+        return False
 
 #COMPLETE / PASSED
 def convert_date_format(mystr):
@@ -128,19 +91,12 @@ def convert_date_format(mystr):
     >>> convert_date_format('2018.03-04')  -> 'NONE'
     >>> convert_date_format('2018-03-054') -> 'NONE'
     """
-    
-    dateList = mystr.split('-')
-    
-    #invalid delimiter
-    if not len(dateList) == 3:
-        return 'NONE'
-    #invalid year, month, or day based on number of digits
-    elif not (len(dateList[0]) == 4) or not (len(dateList[1]) == 2) or not (len(dateList[2]) == 2):
-        return 'NONE'
+    matchObj = re.match(r'(\d{4})\-(\d{2})\-(\d{2})', mystr)
+    if matchObj and matchObj.group() == mystr:
+        formatedDate = '%s-%s-%s' % (matchObj.group(2), matchObj.group(3), matchObj.group(1))
+        return formatedDate
     else:
-        dateList.append(dateList.pop(0))
-        return '-'.join(dateList)
-
+        return 'NONE'
 
 #File functions
 
@@ -164,10 +120,8 @@ def readFileCountStringOccurrences(filename, stringval):
     numStrings = 0
     with open(filename, 'r') as fileReader:
         fileContent = fileReader.read()
-        contentList = fileContent.split()
-        for item in contentList:
-            if item == stringval:
-                numStrings += 1
+        contentList = re.findall(stringval, fileContent)
+        numStrings = len(contentList)
     return numStrings
 
 #COMPLETE / PASSED
@@ -178,7 +132,7 @@ def readFileSumDigitsGreaterThanNumber(filename, number):
     digiSum = 0
     with open(filename, 'r') as fileReader:
         fileContent = fileReader.read()
-        contentList = fileContent.split()
+        contentList = re.findall(r'(\d+)', fileContent)
         for item in contentList:
             if item.isdigit() and int(item) > number:
                 digiSum += int(item)
@@ -189,28 +143,40 @@ def remove_all_but_alpha(mystr):
     """ remove all characters that are not alpha a-z A-Z
     >>> remove_all_but_alpha('hey-99-where8isthe**big_table**') -> 'heywhereisthebigtable'
     """
-    alphaList = [char for char in mystr if char.isalpha()]
+    alphaList = re.findall(r'[a-zA-Z]+', mystr)
     return ''.join(alphaList)
 
 #URL functions
-def readurlCountStringOccurrences(urlname, stringval):
+#COMPLETE / PASSED
+def readurlCountStringOccurrences(urlname, stringval, flags= re.I):
     """return number of times  stringval appears in text of url - ignore case
      >>> readurlCountStringOccurrences('http://s2.smu.edu/~coyle/testurls/foo.txt','rollo')  -> 3
     """
-    return 100
+    urlObj = urllib.request.Request(urlname)
+    urlReader = urllib.request.urlopen(urlObj)
+    urlContentBytes = urlReader.read()
+    urlContentString = urlContentBytes.decode("ASCII")
+    
+    matchList = re.findall(stringval, urlContentString, flags= re.I)
+    return len(matchList)
 
+#COMPLETE / PASSED
 def readurlCountValidPhoneNumbers(urlname):
     """return count of valid phone number formats: no separator, dash separator, period separator:
     valid: 2126663333, 212-666-3333, 212.666.3333
     invalid: 212-444.5555, 212.333-4444, 212, 6363636363636
     >>> readurlCountValidPhoneNumbers('http://s2.smu.edu/~coyle/testurls/foo.txt')  -> 3
     """
-    return 100
+    urlObj = urllib.request.Request(urlname)
+    urlReader = urllib.request.urlopen(urlObj)
+    urlContentBytes = urlReader.read()
+    urlContentString = urlContentBytes.decode("ASCII")
+    
+    matchList = re.findall(r'\d{10}|\d{3}([\.\-])\d{3}\1\d{4}', urlContentString)
+    
+    return len(matchList)
 
 
 
 if __name__  == '__main__':
     print ("To test your code execute: python test_QuestFilesUrls.py  or on command line execute: pytest ")
-
-
-
